@@ -1,0 +1,191 @@
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+}
+
+.app-root {
+    -fx-background-color: linear-gradient(to bottom, #eef5ff 0%, #f7f9fc 38%, #edf3ff 100%);
+    -fx-padding: 18px;
+}
+
+.app-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #15233d;
+    -fx-padding: 0 0 6px 0;
+}
+
+.subtitle {
+    -fx-text-fill: #5e6f8f;
+    -fx-font-size: 13px;
+}
+
+.section-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1d2c49;
+    -fx-padding: 4px 0 2px 0;
+}
+
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #dfeafc;
+    -fx-background-radius: 10px 10px 0 0;
+    -fx-padding: 9px 18px;
+    -fx-border-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: linear-gradient(to bottom, #ffffff 0%, #f3f8ff 100%);
+    -fx-effect: dropshadow(gaussian, rgba(58, 92, 164, 0.18), 8, 0.2, 0, -1);
+}
+
+.tab-pane .tab-label {
+    -fx-text-fill: #42567c;
+    -fx-font-weight: 700;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #153a7d;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-background-color: linear-gradient(to bottom, #ffffff 0%, #f9fbff 100%);
+    -fx-background-radius: 0 12px 12px 12px;
+    -fx-padding: 6px 0 0 0;
+}
+
+.calculator-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 18px 10px 8px 10px;
+}
+
+.column-heading {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #6b7d9b;
+    -fx-letter-spacing: 0.4px;
+}
+
+.entry-row {
+    -fx-padding: 10px 8px;
+    -fx-background-color: linear-gradient(to right, #f3f7ff 0%, #f9fbff 100%);
+    -fx-background-radius: 10px;
+    -fx-border-color: #e2eaf7;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+}
+
+.text-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d8e2f0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 10px;
+    -fx-text-fill: #1d2c49;
+    -fx-prompt-text-fill: #9aa9c2;
+    -fx-highlight-fill: #8db0ff;
+    -fx-highlight-text-fill: white;
+    -fx-focus-color: #4e7cf4;
+    -fx-faint-focus-color: rgba(78, 124, 244, 0.15);
+}
+
+.text-field:focused {
+    -fx-border-color: #5a86ea;
+    -fx-effect: dropshadow(gaussian, rgba(90, 134, 234, 0.25), 8, 0.25, 0, 0);
+}
+
+.rows-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.rows-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.button {
+    -fx-cursor: hand;
+    -fx-font-weight: 700;
+    -fx-padding: 9px 15px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: transparent;
+}
+
+.primary-button {
+    -fx-background-color: linear-gradient(to bottom, #3d76ee 0%, #2e62db 100%);
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(46, 98, 219, 0.35), 8, 0.25, 0, 2);
+}
+
+.primary-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #2d67e3 0%, #2358c8 100%);
+}
+
+.secondary-button {
+    -fx-background-color: linear-gradient(to bottom, #edf3ff 0%, #e1ebff 100%);
+    -fx-text-fill: #27446f;
+    -fx-border-color: #d7e3fb;
+}
+
+.secondary-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #e2edff 0%, #d3e4ff 100%);
+}
+
+.remove-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8293ae;
+    -fx-font-size: 18px;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 6px;
+}
+
+.remove-button:hover {
+    -fx-background-color: #fff1f1;
+    -fx-text-fill: #d45a5a;
+}
+
+.result-card {
+    -fx-padding: 16px 18px 14px 18px;
+    -fx-background-color: linear-gradient(to right, #edf4ff 0%, #f7faff 100%);
+    -fx-background-radius: 12px;
+    -fx-border-color: #deebff;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(38, 84, 175, 0.08), 12, 0.2, 0, 2);
+}
+
+.result-caption {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #697c9e;
+    -fx-letter-spacing: 0.8px;
+    -fx-text-transform: uppercase;
+}
+
+.result-value {
+    -fx-font-size: 31px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #214eb1;
+}
+
+.status {
+    -fx-text-fill: #60708c;
+    -fx-font-size: 12px;
+}
+
+.error-status {
+    -fx-text-fill: #c73b3b;
+    -fx-font-weight: 700;
+}
