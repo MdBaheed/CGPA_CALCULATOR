@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <meta name="description" content="Track subjects and calculate your semester and cumulative GPA.">
+    <title>Gradebook — Academic Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main id="auth-view" class="auth-shell">
+      <section class="auth-story">
+        <a class="brand brand-light" href="/" aria-label="Gradebook home">
+          <span class="brand-mark">G</span>
+          <span>gradebook<span class="brand-dot">.</span></span>
+        </a>
+        <div class="story-content">
+          <span class="eyebrow eyebrow-light">YOUR ACADEMIC COMPANION</span>
+          <h1>Make every<br>semester count.</h1>
+          <p>Keep your subjects organized and know exactly where your grades stand.</p>
+          <div class="story-stat">
+            <span class="stat-mark">↗</span>
+            <span><strong>One clear view</strong><br>for your academic progress</span>
+          </div>
+        </div>
+        <span class="story-footer">A little more clarity, every semester.</span>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-card">
+          <a class="brand brand-dark" href="/" aria-label="Gradebook home">
+            <span class="brand-mark">G</span>
+            <span>gradebook<span class="brand-dot">.</span></span>
+          </a>
+          <span class="eyebrow" id="auth-eyebrow">GET STARTED</span>
+          <h2 id="auth-title">Create your account</h2>
+          <p class="muted" id="auth-description">Set up your student profile to start tracking your grades.</p>
+
+          <form id="auth-form" class="form-stack">
+            <div id="profile-fields" class="profile-fields">
+              <label>
+                <span>Full name</span>
+                <input id="full-name" name="fullName" type="text" autocomplete="name" maxlength="100" placeholder="e.g. Alex Morgan" required>
+              </label>
+              <label>
+                <span>Department</span>
+                <input id="department" name="department" type="text" maxlength="100" placeholder="e.g. Computer Science" required>
+              </label>
+              <div class="field-pair">
+                <label>
+                  <span>Year</span>
+                  <select id="academic-year" name="academicYear" required>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                    <option value="4">Year 4</option>
+                    <option value="5">Year 5</option>
+                    <option value="6">Year 6</option>
+                    <option value="7">Year 7</option>
+                    <option value="8">Year 8</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Semester</span>
+                  <select id="semester-number" name="semesterNumber" required>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                    <option value="4">Semester 4</option>
+                    <option value="5">Semester 5</option>
+                    <option value="6">Semester 6</option>
+                    <option value="7">Semester 7</option>
+                    <option value="8">Semester 8</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <label>
+              <span>Email address</span>
+              <input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@university.edu" required>
+            </label>
+            <label>
+              <span>Password</span>
+              <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+            </label>
+            <p id="auth-message" class="form-message" role="status" aria-live="polite"></p>
+            <button id="auth-submit" class="button button-primary button-wide" type="submit">Create account <span aria-hidden="true">→</span></button>
+          </form>
+
+          <p class="auth-switch">
+            <span id="auth-switch-label">Already have an account?</span>
+            <button id="auth-switch" class="text-button" type="button">Sign in</button>
+          </p>
+        </div>
+        <span class="auth-legal">Your academic data is private to your account.</span>
+      </section>
+    </main>
+
+    <main id="app-view" class="app-shell" hidden>
+      <aside class="sidebar">
+        <a class="brand brand-dark sidebar-brand" href="#" aria-label="Gradebook dashboard">
+          <span class="brand-mark">G</span>
+          <span>gradebook<span class="brand-dot">.</span></span>
+        </a>
+        <div class="sidebar-label">WORKSPACE</div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <button class="nav-item is-active" type="button" data-view="subjects"><span class="nav-icon">▦</span> Subjects</button>
+          <button class="nav-item" type="button" data-view="sgpa"><span class="nav-icon">◷</span> Semester GPA</button>
+          <button class="nav-item" type="button" data-view="cgpa"><span class="nav-icon">⌁</span> Cumulative GPA</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-help">
+            <span class="help-icon">?</span>
+            <span><strong>Grade points</strong><br>Use your institution's scale.</span>
+          </div>
+          <button id="sign-out" class="sign-out-button" type="button"><span aria-hidden="true">↪</span> Sign out</button>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="breadcrumbs"><span>Workspace</span><span class="crumb-separator">/</span><strong id="breadcrumb-current">Subjects</strong></div>
+          <div class="student-chip">
+            <div class="avatar" id="avatar-initials">S</div>
+            <div class="student-chip-copy"><strong id="header-name">Student</strong><span id="header-department">Department</span></div>
+            <span class="chip-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </header>
+
+        <div class="page-content">
+          <section class="welcome-row">
+            <div>
+              <span class="eyebrow" id="current-term-label">YOUR ACADEMIC WORKSPACE</span>
+              <h1 id="page-title">Your subjects</h1>
+              <p class="muted" id="page-subtitle">Add your courses and keep your semester in one place.</p>
+            </div>
+            <div class="term-badge"><span class="term-dot"></span><span id="term-badge-label">Year 1 · Semester 1</span></div>
+          </section>
+
+          <section class="summary-grid" aria-label="Grade summary">
+            <article class="summary-card">
+              <div class="summary-card-top"><span>SEMESTER GPA</span><span class="summary-icon icon-blue">◷</span></div>
+              <div class="summary-number" id="summary-sgpa">—</div>
+              <div class="summary-caption" id="summary-sgpa-caption">No subjects this semester</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-card-top"><span>CUMULATIVE GPA</span><span class="summary-icon icon-violet">⌁</span></div>
+              <div class="summary-number" id="summary-cgpa">—</div>
+              <div class="summary-caption" id="summary-cgpa-caption">Across all recorded semesters</div>
+            </article>
+            <article class="summary-card summary-card-accent">
+              <div class="summary-card-top"><span>SUBJECTS</span><span class="summary-icon icon-green">▦</span></div>
+              <div class="summary-number" id="summary-subjects">0</div>
+              <div class="summary-caption" id="summary-credits">0 total credits</div>
+            </article>
+          </section>
+
+          <section class="content-panel" id="subjects-view">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">YOUR COURSEWORK</span>
+                <h2>Subject list</h2>
+                <p class="muted">Grades are weighted by each subject's credits.</p>
+              </div>
+              <div class="term-selectors">
+                <label class="compact-select"><span class="sr-only">Academic year</span><select id="term-year" aria-label="Academic year"></select></label>
+                <label class="compact-select"><span class="sr-only">Semester</span><select id="term-semester" aria-label="Semester"></select></label>
+              </div>
+            </div>
+
+            <form id="subject-form" class="subject-form">
+              <label class="subject-name-field">
+                <span>Subject name</span>
+                <input id="subject-name" name="subjectName" type="text" maxlength="120" placeholder="e.g. Data Structures" required>
+              </label>
+              <label class="subject-number-field">
+                <span>Credits</span>
+                <input id="subject-credits" name="credits" type="number" min="0.01" max="1000" step="any" placeholder="3" required>
+              </label>
+              <label class="subject-number-field">
+                <span>Grade points</span>
+                <input id="subject-points" name="gradePoints" type="number" min="0" max="1000" step="any" placeholder="4.0" required>
+              </label>
+              <button id="add-subject-button" class="button button-primary add-subject-button" type="submit"><span aria-hidden="true">+</span> Add subject</button>
+            </form>
+
+            <p id="subject-message" class="inline-message" role="status" aria-live="polite"></p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>SUBJECT</th><th>CREDITS</th><th>GRADE POINTS</th><th>WEIGHTED POINTS</th><th><span class="sr-only">Actions</span></th></tr></thead>
+                <tbody id="subject-rows"></tbody>
+              </table>
+              <div id="empty-subjects" class="empty-state" hidden>
+                <span class="empty-icon">▦</span>
+                <strong>No subjects for this semester yet</strong>
+                <span>Add your first subject above to see your GPA calculation.</span>
+              </div>
+            </div>
+            <div class="table-footer"><span id="subject-count">0 subjects</span><span>Semester GPA <strong id="table-sgpa">—</strong></span></div>
+          </section>
+
+          <section class="content-panel grade-view" id="sgpa-view" hidden>
+            <div class="panel-heading">
+              <div><span class="eyebrow">SEMESTER PERFORMANCE</span><h2>Semester GPA</h2><p class="muted">A credit-weighted result for your selected semester.</p></div>
+              <div class="term-selectors">
+                <label class="compact-select"><span class="sr-only">Academic year</span><select id="sgpa-year" aria-label="SGPA academic year"></select></label>
+                <label class="compact-select"><span class="sr-only">Semester</span><select id="sgpa-semester" aria-label="SGPA semester"></select></label>
+              </div>
+            </div>
+            <div class="grade-result-card">
+              <span class="result-label">WEIGHTED SEMESTER GPA</span>
+              <strong class="grade-result" id="sgpa-result">—</strong>
+              <span class="muted" id="sgpa-detail">Add subjects to calculate your result.</span>
+            </div>
+            <div class="formula-note"><span class="formula-icon">i</span><span><strong>How it's calculated</strong><br>Sum of (credits × grade points) ÷ total credits for this semester.</span></div>
+          </section>
+
+          <section class="content-panel grade-view" id="cgpa-view" hidden>
+            <div class="panel-heading"><div><span class="eyebrow">OVERALL PROGRESS</span><h2>Cumulative GPA</h2><p class="muted">A credit-weighted result across all semesters with saved subjects.</p></div></div>
+            <div class="grade-result-card cgpa-result-card">
+              <span class="result-label">WEIGHTED CUMULATIVE GPA</span>
+              <strong class="grade-result" id="cgpa-result">—</strong>
+              <span class="muted" id="cgpa-detail">Add subjects across semesters to calculate your result.</span>
+            </div>
+            <div class="semester-list-heading"><h3>Semester breakdown</h3><span id="semester-count-label">0 semesters</span></div>
+            <div id="semester-breakdown" class="semester-breakdown"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
