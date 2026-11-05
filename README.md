@@ -16,6 +16,9 @@ A JavaFX desktop app for calculating GPA, SGPA, and CGPA.
 
 - JDK 25 or newer (Java 25 LTS)
 - Maven 3.8 or newer
+- A Supabase project configured as described in [`web/README.md`](./web/README.md)
+
+Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in the environment before launching the desktop app. The JavaFX app uses Supabase email/password sign-in, collects a unique registration number with each new student profile, stores profiles in Supabase, and shows the student directory only to accounts with the trusted admin role.
 
 ### Run
 

@@ -61,6 +61,9 @@ button { cursor: pointer; }
 .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-message { min-height: 16px; margin: -3px 0 -7px; color: #bd4d4d; font-size: 12px; line-height: 1.5; }
 .form-message.is-success { color: #2a8660; }
+.auth-role-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 16px; border: 1px solid #e8ebf1; border-radius: 9px; background: #f7f8fb; padding: 4px; }
+.role-mode { min-height: 34px; border: 0; border-radius: 6px; background: transparent; color: #778297; font-size: 11px; font-weight: 700; }
+.role-mode.is-active { background: #fff; color: #4264dd; box-shadow: 0 1px 4px #17213a12; }
 .auth-switch { margin: 20px 0 0; color: var(--muted); text-align: center; font-size: 12px; }
 .auth-switch .text-button { margin-left: 4px; }
 .auth-legal { margin-top: 40px; color: #99a2b1; font-size: 10px; }
@@ -137,6 +140,18 @@ td:first-child { color: #344057; font-weight: 600; }
 .grade-view { min-height: 370px; padding-bottom: 22px; }
 .grade-view .panel-heading { margin-bottom: 22px; }
 .grade-result-card { display: flex; min-height: 185px; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid #e6ebff; border-radius: 10px; background: linear-gradient(135deg, #f8f9ff, #f2f5ff); text-align: center; }
+.save-result-button { min-height: 35px; margin-top: 6px; padding: 0 13px; font-size: 11px; }
+.result-history { margin: 22px 0 0; }
+.result-history h3 { margin: 0 0 8px; color: #455066; font: 700 12px "Manrope", sans-serif; }
+.result-history .empty-state { min-height: 90px; }
+.profile-view { padding-bottom: 22px; }
+.profile-form { display: grid; max-width: 520px; gap: 15px; }
+.profile-form label { display: flex; flex-direction: column; gap: 7px; color: #455168; font-size: 11px; font-weight: 700; }
+.profile-form input, .profile-form select { width: 100%; height: 43px; border: 1px solid #e0e5ed; border-radius: 8px; outline: none; background: #fff; color: var(--ink); padding: 0 12px; font-size: 13px; font-weight: 400; }
+.profile-form input:focus, .profile-form select:focus { border-color: #8199f3; box-shadow: 0 0 0 3px #6684f01a; }
+.profile-form input[readonly] { background: #f7f8fb; color: #788397; }
+.profile-email-note { margin: -10px 0 0; font-size: 10px; }
+.profile-form .button { justify-self: start; }
 .result-label { color: #8895b0; font-size: 9px; font-weight: 700; letter-spacing: 1.2px; }
 .grade-result { color: #4365df; font: 800 53px "Manrope", sans-serif; letter-spacing: -2px; }
 .grade-result-card .muted { margin: 0; font-size: 11px; }
@@ -171,7 +186,7 @@ td:first-child { color: #344057; font-weight: 600; }
   .app-shell { display: block; padding-bottom: 67px; }
   .sidebar { position: fixed; z-index: 3; top: auto; right: 0; bottom: 0; left: 0; display: block; width: 100%; height: 62px; border-top: 1px solid var(--line); border-right: 0; padding: 5px 10px; }
   .sidebar-brand, .sidebar-label, .sidebar-bottom { display: none; }
-  .main-nav { height: 100%; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .main-nav { height: 100%; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 4px; }
   .nav-item { min-height: 50px; flex-direction: column; justify-content: center; gap: 2px; padding: 4px 2px; font-size: 9px; }
   .nav-icon { font-size: 15px; }
   .topbar { height: 59px; padding: 0 17px; }

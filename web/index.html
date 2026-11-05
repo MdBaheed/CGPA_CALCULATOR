@@ -41,6 +41,10 @@
           <span class="eyebrow" id="auth-eyebrow">GET STARTED</span>
           <h2 id="auth-title">Create your account</h2>
           <p class="muted" id="auth-description">Set up your student profile to start tracking your grades.</p>
+          <div id="auth-role-switch" class="auth-role-switch" role="group" aria-label="Account type">
+            <button id="student-auth-mode" class="role-mode is-active" type="button" aria-pressed="true">Student</button>
+            <button id="admin-auth-mode" class="role-mode" type="button" aria-pressed="false">Admin</button>
+          </div>
 
           <form id="auth-form" class="form-stack">
             <div id="profile-fields" class="profile-fields">
@@ -49,7 +53,11 @@
                 <input id="full-name" name="fullName" type="text" autocomplete="name" maxlength="100" placeholder="e.g. Alex Morgan" required>
               </label>
               <label>
-                <span>Department</span>
+                <span>Register no.</span>
+                <input id="registration-number" name="registrationNumber" type="text" maxlength="50" autocomplete="off" placeholder="e.g. 2026CS001" required>
+              </label>
+              <label>
+                <span>Degree / branch</span>
                 <input id="department" name="department" type="text" maxlength="100" placeholder="e.g. Computer Science" required>
               </label>
               <div class="field-pair">
@@ -60,10 +68,6 @@
                     <option value="2">Year 2</option>
                     <option value="3">Year 3</option>
                     <option value="4">Year 4</option>
-                    <option value="5">Year 5</option>
-                    <option value="6">Year 6</option>
-                    <option value="7">Year 7</option>
-                    <option value="8">Year 8</option>
                   </select>
                 </label>
                 <label>
@@ -97,6 +101,14 @@
             <span id="auth-switch-label">Already have an account?</span>
             <button id="auth-switch" class="text-button" type="button">Sign in</button>
           </p>
+          <p id="admin-login-link" class="auth-switch">
+            Administrator?
+            <a class="text-button" href="/?admin=1">Admin sign in</a>
+          </p>
+          <p id="student-login-link" class="auth-switch" hidden>
+            Student account?
+            <a class="text-button" href="/">Student sign in</a>
+          </p>
         </div>
         <span class="auth-legal">Your academic data is private to your account.</span>
       </section>
@@ -111,8 +123,10 @@
         <div class="sidebar-label">WORKSPACE</div>
         <nav class="main-nav" aria-label="Main navigation">
           <button class="nav-item is-active" type="button" data-view="subjects"><span class="nav-icon">▦</span> Subjects</button>
+          <button class="nav-item" type="button" data-view="profile"><span class="nav-icon">◎</span> Student details</button>
           <button class="nav-item" type="button" data-view="sgpa"><span class="nav-icon">◷</span> Semester GPA</button>
           <button class="nav-item" type="button" data-view="cgpa"><span class="nav-icon">⌁</span> Cumulative GPA</button>
+          <button id="admin-students-nav" class="nav-item" type="button" data-view="admin-students" hidden><span class="nav-icon">▤</span> Students</button>
         </nav>
         <div class="sidebar-bottom">
           <div class="sidebar-help">
@@ -134,6 +148,7 @@
         </header>
 
         <div class="page-content">
+          <div id="student-dashboard-content">
           <section class="welcome-row">
             <div>
               <span class="eyebrow" id="current-term-label">YOUR ACADEMIC WORKSPACE</span>
@@ -202,7 +217,21 @@
                 <span>Add your first subject above to see your GPA calculation.</span>
               </div>
             </div>
-            <div class="table-footer"><span id="subject-count">0 subjects</span><span>Semester GPA <strong id="table-sgpa">—</strong></span></div>
+            <div class="table-footer">
+              <span id="subject-count">0 subjects</span>
+              <span>GPA <strong id="table-sgpa">—</strong></span>
+              <button id="save-gpa-result" class="button button-primary save-result-button" type="button">Save GPA</button>
+            </div>
+            <div class="result-history">
+              <h3>Saved GPA results</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>YEAR</th><th>SEMESTER</th><th>GPA</th><th>SAVED</th></tr></thead>
+                  <tbody id="gpa-history-rows"></tbody>
+                </table>
+                <div id="empty-gpa-history" class="empty-state" hidden>No GPA results saved yet.</div>
+              </div>
+            </div>
           </section>
 
           <section class="content-panel grade-view" id="sgpa-view" hidden>
@@ -217,8 +246,19 @@
               <span class="result-label">WEIGHTED SEMESTER GPA</span>
               <strong class="grade-result" id="sgpa-result">—</strong>
               <span class="muted" id="sgpa-detail">Add subjects to calculate your result.</span>
+              <button id="save-sgpa-result" class="button button-primary save-result-button" type="button">Save SGPA</button>
             </div>
             <div class="formula-note"><span class="formula-icon">i</span><span><strong>How it's calculated</strong><br>Sum of (credits × grade points) ÷ total credits for this semester.</span></div>
+            <div class="result-history">
+              <h3>Saved SGPA results</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>YEAR</th><th>SEMESTER</th><th>SGPA</th><th>SAVED</th></tr></thead>
+                  <tbody id="sgpa-history-rows"></tbody>
+                </table>
+                <div id="empty-sgpa-history" class="empty-state" hidden>No SGPA results saved yet.</div>
+              </div>
+            </div>
           </section>
 
           <section class="content-panel grade-view" id="cgpa-view" hidden>
@@ -227,9 +267,76 @@
               <span class="result-label">WEIGHTED CUMULATIVE GPA</span>
               <strong class="grade-result" id="cgpa-result">—</strong>
               <span class="muted" id="cgpa-detail">Add subjects across semesters to calculate your result.</span>
+              <button id="save-cgpa-result" class="button button-primary save-result-button" type="button">Save CGPA</button>
             </div>
             <div class="semester-list-heading"><h3>Semester breakdown</h3><span id="semester-count-label">0 semesters</span></div>
             <div id="semester-breakdown" class="semester-breakdown"></div>
+            <div class="result-history">
+              <h3>Saved CGPA results</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>CGPA</th><th>CREDITS</th><th>SUBJECTS</th><th>SAVED</th></tr></thead>
+                  <tbody id="cgpa-history-rows"></tbody>
+                </table>
+                <div id="empty-cgpa-history" class="empty-state" hidden>No CGPA results saved yet.</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="content-panel profile-view" id="profile-view" hidden>
+            <div class="panel-heading">
+              <div><span class="eyebrow">STUDENT PROFILE</span><h2>Student details</h2><p class="muted">Update your name, degree or branch, year, and semester.</p></div>
+            </div>
+            <form id="profile-form" class="profile-form">
+              <label>
+                <span>Name of the student</span>
+                <input id="profile-full-name" name="fullName" type="text" maxlength="100" required>
+              </label>
+              <label>
+                <span>Degree / branch</span>
+                <input id="profile-department" name="department" type="text" maxlength="100" required>
+              </label>
+              <div class="field-pair">
+                <label>
+                  <span>Year</span>
+                  <select id="profile-academic-year" name="academicYear" required></select>
+                </label>
+                <label>
+                  <span>Semester</span>
+                  <select id="profile-semester-number" name="semesterNumber" required></select>
+                </label>
+              </div>
+              <label>
+                <span>Email address</span>
+                <input id="profile-email" name="email" type="email" readonly>
+              </label>
+              <p class="muted profile-email-note">Email is linked to your sign-in account and cannot be changed here.</p>
+              <p id="profile-message" class="inline-message" role="status" aria-live="polite"></p>
+              <button id="save-profile-button" class="button button-primary" type="submit">Save student details</button>
+            </form>
+          </section>
+          </div>
+          <section class="content-panel" id="admin-students-view" hidden>
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">ADMINISTRATION</span>
+                <h2>Student records</h2>
+                <p class="muted">Student name, email, department, year, and semester.</p>
+              </div>
+              <span id="admin-student-count" class="muted">0 students</span>
+            </div>
+            <p id="admin-students-message" class="inline-message" role="status" aria-live="polite"></p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>REGISTER NO.</th><th>STUDENT NAME</th><th>EMAIL</th><th>DEGREE / BRANCH</th><th>YEAR</th><th>SEMESTER</th></tr></thead>
+                <tbody id="admin-student-rows"></tbody>
+              </table>
+              <div id="empty-admin-students" class="empty-state" hidden>
+                <span class="empty-icon">▤</span>
+                <strong>No student profiles found</strong>
+                <span>Student profiles will appear here after they sign up.</span>
+              </div>
+            </div>
           </section>
         </div>
       </section>

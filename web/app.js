@@ -2,6 +2,7 @@ const state = {
   client: null,
   user: null,
   profile: null,
+  role: "student",
   subjects: [],
   year: 1,
   semester: 1,
@@ -9,7 +10,10 @@ const state = {
   toastTimer: null,
   dashboardPromise: null,
   dashboardPromiseUserId: null,
-  dashboardReady: false
+  dashboardReady: false,
+  authRoleMode: new URLSearchParams(window.location.search).get("admin") === "1" ? "admin" : "student",
+  dedicatedAdminLogin: new URLSearchParams(window.location.search).get("admin") === "1",
+  studentAuthMode: "signup"
 };
 
 const byId = (id) => document.getElementById(id);
@@ -37,6 +41,12 @@ function showToast(message) {
 }
 
 function setAuthMode(mode) {
+  if (state.authRoleMode === "student") {
+    state.studentAuthMode = mode;
+  }
+  if (state.authRoleMode === "admin") {
+    mode = "signin";
+  }
   state.authMode = mode;
   const isSignup = mode === "signup";
   byId("profile-fields").hidden = !isSignup;
@@ -44,27 +54,52 @@ function setAuthMode(mode) {
     input.required = isSignup;
   });
   byId("password").autocomplete = isSignup ? "new-password" : "current-password";
-  byId("auth-eyebrow").textContent = isSignup ? "GET STARTED" : "WELCOME BACK";
-  byId("auth-title").textContent = isSignup ? "Create your account" : "Sign in to Gradebook";
-  byId("auth-description").textContent = isSignup
-    ? "Set up your student profile to start tracking your grades."
-    : "Pick up where you left off and check your academic progress.";
+  byId("auth-eyebrow").textContent = state.authRoleMode === "admin"
+    ? "ADMINISTRATOR ACCESS"
+    : isSignup ? "GET STARTED" : "WELCOME BACK";
+  byId("auth-title").textContent = state.authRoleMode === "admin"
+    ? "Administrator sign in"
+    : isSignup ? "Create your account" : "Sign in to Gradebook";
+  byId("auth-description").textContent = state.authRoleMode === "admin"
+    ? "Sign in with your authorized administrator account to review student records."
+    : isSignup
+      ? "Set up your student profile to start tracking your grades."
+      : "Pick up where you left off and check your academic progress.";
   byId("auth-submit").textContent = isSignup ? "Create account →" : "Sign in →";
   byId("auth-switch-label").textContent = isSignup
     ? "Already have an account?"
     : "New to Gradebook?";
   byId("auth-switch").textContent = isSignup ? "Sign in" : "Create account";
+  byId("auth-switch").hidden = state.authRoleMode === "admin";
+  byId("auth-switch-label").hidden = state.authRoleMode === "admin";
+  byId("admin-login-link").hidden = state.authRoleMode === "admin";
+  byId("student-login-link").hidden = state.authRoleMode !== "admin";
+  byId("auth-role-switch").hidden = state.dedicatedAdminLogin;
   setAuthMessage("");
 }
 
+function setAuthRoleMode(mode) {
+  state.authRoleMode = mode;
+  const isAdmin = mode === "admin";
+  byId("student-auth-mode").classList.toggle("is-active", !isAdmin);
+  byId("student-auth-mode").setAttribute("aria-pressed", String(!isAdmin));
+  byId("admin-auth-mode").classList.toggle("is-active", isAdmin);
+  byId("admin-auth-mode").setAttribute("aria-pressed", String(isAdmin));
+  byId("auth-switch").hidden = isAdmin;
+  byId("auth-switch-label").hidden = isAdmin;
+  setAuthMode(isAdmin ? "signin" : state.studentAuthMode);
+}
+
 function populateTermSelectors() {
-  ["term-year", "sgpa-year"].forEach((id) => {
+  ["term-year", "sgpa-year", "profile-academic-year", "profile-semester-number"].forEach((id) => {
     const select = byId(id);
     select.replaceChildren();
-    for (let year = 1; year <= 8; year += 1) {
+    const optionCount = id === "profile-semester-number" ? 8 : 4;
+    for (let year = 1; year <= optionCount; year += 1) {
       const option = document.createElement("option");
       option.value = String(year);
-      option.textContent = `Year ${year}`;
+      const isSemester = id === "profile-semester-number";
+      option.textContent = isSemester ? `Semester ${year}` : `Year ${year}`;
       select.append(option);
     }
   });
@@ -98,22 +133,39 @@ function syncTermSelectors() {
 }
 
 function setActiveView(viewName) {
-  const labels = { subjects: "Subjects", sgpa: "Semester GPA", cgpa: "Cumulative GPA" };
+  const labels = {
+    subjects: "Subjects",
+    profile: "Student details",
+    sgpa: "Semester GPA",
+    cgpa: "Cumulative GPA",
+    "admin-students": "Students"
+  };
   document.querySelectorAll(".nav-item").forEach((button) => {
     const active = button.dataset.view === viewName;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-current", active ? "page" : "false");
   });
+  const isAdminView = viewName === "admin-students";
+  byId("student-dashboard-content").hidden = isAdminView;
+  byId("admin-students-view").hidden = !isAdminView;
   byId("breadcrumb-current").textContent = labels[viewName];
+  if (isAdminView) {
+    byId("page-title").textContent = "Student records";
+    byId("page-subtitle").textContent = "Review student academic profiles.";
+    return;
+  }
   byId("page-title").textContent = viewName === "subjects"
     ? "Your subjects"
-    : viewName === "sgpa" ? "Semester GPA" : "Cumulative GPA";
+    : viewName === "profile" ? "Student details"
+      : viewName === "sgpa" ? "Semester GPA" : "Cumulative GPA";
   byId("page-subtitle").textContent = viewName === "subjects"
     ? "Add your courses and keep your semester in one place."
-    : viewName === "sgpa"
-      ? "See your credit-weighted result for a selected semester."
-      : "Understand your overall progress across recorded semesters.";
+    : viewName === "profile" ? "View and update your student details."
+      : viewName === "sgpa"
+        ? "See your credit-weighted result for a selected semester."
+        : "Understand your overall progress across recorded semesters.";
   byId("subjects-view").hidden = viewName !== "subjects";
+  byId("profile-view").hidden = viewName !== "profile";
   byId("sgpa-view").hidden = viewName !== "sgpa";
   byId("cgpa-view").hidden = viewName !== "cgpa";
 }
@@ -245,6 +297,101 @@ function renderDashboard() {
   renderSemesterBreakdown();
 }
 
+function showProfile(profile) {
+  byId("profile-full-name").value = profile.full_name;
+  byId("profile-department").value = profile.department;
+  byId("profile-academic-year").value = String(profile.academic_year);
+  byId("profile-semester-number").value = String(profile.semester_number);
+  byId("profile-email").value = state.user.email ?? profile.email;
+}
+
+function renderResultHistory(type, results) {
+  const rows = byId(`${type}-history-rows`);
+  const empty = byId(`empty-${type}-history`);
+  rows.replaceChildren();
+  empty.hidden = results.length !== 0;
+  results.forEach((result) => {
+    const row = document.createElement("tr");
+    const values = type === "cgpa"
+      ? [Number(result.cgpa).toFixed(2), formatNumber(Number(result.total_credits), 3),
+        String(result.subject_count), new Date(result.created_at).toLocaleDateString()]
+      : [String(result.academic_year), String(result.semester_number),
+        Number(result[type]).toFixed(2), new Date(result.created_at).toLocaleDateString()];
+    values.forEach((value) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    });
+    rows.append(row);
+  });
+}
+
+function showResultHistoryError(type, error) {
+  const rows = byId(`${type}-history-rows`);
+  const empty = byId(`empty-${type}-history`);
+  rows.replaceChildren();
+  empty.textContent = `Could not load saved ${type.toUpperCase()} results. ${error.message}`;
+  empty.hidden = false;
+  console.error(error);
+}
+
+async function loadResultHistory(type) {
+  const columns = type === "cgpa"
+    ? "cgpa, total_credits, subject_count, created_at"
+    : `${type}, academic_year, semester_number, created_at`;
+  const { data, error } = await state.client
+    .from(`${type}_results`)
+    .select(columns)
+    .eq("user_id", state.user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) {
+    showResultHistoryError(type, new Error(`Could not load saved ${type.toUpperCase()} results: ${error.message}`));
+    return false;
+  }
+  renderResultHistory(type, data ?? []);
+  return true;
+}
+
+async function saveResult(type) {
+  const subjects = type === "cgpa" ? state.subjects : currentTermSubjects();
+  const result = calculateGpa(subjects);
+  if (result.gpa === null) {
+    showToast(type === "cgpa"
+      ? "Add subjects before saving a CGPA result."
+      : "Add subjects to this semester before saving a result.");
+    return;
+  }
+
+  const button = byId(`save-${type}-result`);
+  button.disabled = true;
+  try {
+    const payload = {
+      user_id: state.user.id,
+      [type]: result.gpa,
+      total_credits: result.credits,
+      subject_count: subjects.length
+    };
+    if (type !== "cgpa") {
+      payload.academic_year = state.year;
+      payload.semester_number = state.semester;
+    }
+    const { error } = await state.client.from(`${type}_results`).insert(payload);
+    if (error) {
+      throw new Error(`Could not save this ${type.toUpperCase()} result: ${error.message}`);
+    }
+    const historyLoaded = await loadResultHistory(type);
+    showToast(historyLoaded
+      ? `${type.toUpperCase()} result saved.`
+      : `${type.toUpperCase()} result saved, but its history could not be refreshed.`);
+  } catch (error) {
+    showToast(error.message || `Could not save this ${type.toUpperCase()} result.`);
+    console.error(error);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function loadSubjects() {
   const { data, error } = await state.client
     .from("subjects")
@@ -263,7 +410,7 @@ async function loadSubjects() {
 async function ensureProfile(user) {
   const { data: existingProfile, error: readError } = await state.client
     .from("profiles")
-    .select("id, full_name, department, academic_year, semester_number")
+    .select("id, full_name, registration_number, email, department, academic_year, semester_number")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -278,24 +425,67 @@ async function ensureProfile(user) {
   const profile = {
     id: user.id,
     full_name: String(metadata.full_name ?? "").trim(),
+    registration_number: String(metadata.registration_number ?? "").trim(),
+    email: String(user.email ?? "").trim(),
     department: String(metadata.department ?? "").trim(),
     academic_year: Number(metadata.academic_year),
     semester_number: Number(metadata.semester_number)
   };
-  if (!profile.full_name || !profile.department ||
+  if (!profile.full_name || !profile.registration_number || !profile.email || !profile.department ||
       !Number.isInteger(profile.academic_year) || !Number.isInteger(profile.semester_number)) {
-    throw new Error("Your student profile is incomplete. Please create your account again or contact support.");
+    throw new Error("Your student profile is incomplete, including its registration number. Please contact support.");
   }
 
   const { data, error } = await state.client
     .from("profiles")
     .insert(profile)
-    .select("id, full_name, department, academic_year, semester_number")
+    .select("id, full_name, registration_number, email, department, academic_year, semester_number")
     .single();
   if (error) {
     throw new Error(`Could not save your student profile: ${error.message}`);
   }
   return data;
+}
+
+async function loadAdminStudents() {
+  const message = byId("admin-students-message");
+  message.textContent = "";
+  const rows = byId("admin-student-rows");
+  rows.replaceChildren();
+  byId("empty-admin-students").hidden = true;
+  byId("admin-student-count").textContent = "Loading students…";
+
+  const students = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await state.client
+      .from("profiles")
+      .select("registration_number, full_name, email, department, academic_year, semester_number")
+      .order("full_name", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) {
+      throw new Error(`Could not load student records: ${error.message}`);
+    }
+    students.push(...(data ?? []));
+    if (!data || data.length < pageSize) {
+      break;
+    }
+  }
+
+  byId("admin-student-count").textContent =
+    `${students.length} ${students.length === 1 ? "student" : "students"}`;
+  byId("empty-admin-students").hidden = students.length !== 0;
+  students.forEach((student) => {
+    const row = document.createElement("tr");
+    [student.registration_number || "—", student.full_name, student.email, student.department,
+      `Year ${student.academic_year}`, `Semester ${student.semester_number}`]
+      .forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.append(cell);
+      });
+    rows.append(row);
+  });
 }
 
 async function showDashboard(user) {
@@ -308,15 +498,34 @@ async function showDashboard(user) {
 
   state.user = user;
   state.dashboardReady = false;
+  state.role = user.app_metadata?.role === "admin" ? "admin" : "student";
   state.dashboardPromiseUserId = user.id;
   authView.hidden = true;
   appView.hidden = false;
-  setActiveView("subjects");
+  const isAdmin = state.role === "admin";
+  byId("admin-students-nav").hidden = !isAdmin;
+  document.querySelectorAll(".nav-item[data-view='subjects'], .nav-item[data-view='profile'], .nav-item[data-view='sgpa'], .nav-item[data-view='cgpa']")
+    .forEach((button) => { button.hidden = isAdmin; });
+  setActiveView(isAdmin ? "admin-students" : "subjects");
   byId("subject-rows").replaceChildren();
   byId("empty-subjects").hidden = true;
+  byId("student-dashboard-content").hidden = isAdmin;
+  byId("admin-students-view").hidden = !isAdmin;
 
   const dashboardPromise = (async () => {
     try {
+      if (isAdmin) {
+        byId("header-name").textContent = "Administrator";
+        byId("header-department").textContent = user.email ?? "";
+        byId("avatar-initials").textContent = "A";
+        await loadAdminStudents();
+        if (state.user?.id !== user.id) {
+          return;
+        }
+        state.dashboardReady = true;
+        return;
+      }
+
       const profile = await ensureProfile(user);
       if (state.user?.id !== user.id) {
         return;
@@ -325,12 +534,14 @@ async function showDashboard(user) {
       state.profile = profile;
       state.year = profile.academic_year;
       state.semester = profile.semester_number;
+      showProfile(profile);
       byId("header-name").textContent = profile.full_name;
       byId("header-department").textContent = profile.department;
       byId("avatar-initials").textContent = profile.full_name
         .split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("");
       syncTermSelectors();
       await loadSubjects();
+      await Promise.all(["gpa", "sgpa", "cgpa"].map((type) => loadResultHistory(type)));
       if (state.user?.id !== user.id) {
         return;
       }
@@ -360,6 +571,10 @@ function showAuth() {
   state.dashboardReady = false;
   state.dashboardPromise = null;
   state.dashboardPromiseUserId = null;
+  state.role = "student";
+  byId("admin-students-nav").hidden = true;
+  document.querySelectorAll(".nav-item[data-view='subjects'], .nav-item[data-view='profile'], .nav-item[data-view='sgpa'], .nav-item[data-view='cgpa']")
+    .forEach((button) => { button.hidden = false; });
   appView.hidden = true;
   authView.hidden = false;
 }
@@ -383,11 +598,18 @@ async function handleAuthSubmit(event) {
 
     if (state.authMode === "signup") {
       const fullName = byId("full-name").value.trim();
+      const registrationNumber = byId("registration-number").value.trim();
       const department = byId("department").value.trim();
       const academicYear = Number(byId("academic-year").value);
       const semesterNumber = Number(byId("semester-number").value);
-      if (!fullName || !department) {
-        throw new Error("Enter your name and department to create your profile.");
+      if (!Number.isInteger(academicYear) || academicYear < 1 || academicYear > 4) {
+        throw new Error("Academic year must be from 1 to 4.");
+      }
+      if (!fullName || !registrationNumber || !department) {
+        throw new Error("Enter your name, registration number, and department to create your profile.");
+      }
+      if (registrationNumber.length > 50) {
+        throw new Error("Registration number must be 50 characters or fewer.");
       }
 
       const { data, error } = await state.client.auth.signUp({
@@ -396,6 +618,7 @@ async function handleAuthSubmit(event) {
         options: {
           data: {
             full_name: fullName,
+            registration_number: registrationNumber,
             department,
             academic_year: academicYear,
             semester_number: semesterNumber
@@ -414,6 +637,13 @@ async function handleAuthSubmit(event) {
       const { data, error } = await state.client.auth.signInWithPassword({ email, password });
       if (error) {
         throw error;
+      }
+      const isAdmin = data.user.app_metadata?.role === "admin";
+      if ((state.authRoleMode === "admin") !== isAdmin) {
+        await state.client.auth.signOut();
+        throw new Error(isAdmin
+          ? "This is an administrator account. Select Admin to sign in."
+          : "This account does not have administrator access.");
       }
       await showDashboard(data.user);
     }
@@ -489,6 +719,59 @@ async function removeSubject(subject) {
   }
 }
 
+async function saveProfile(event) {
+  event.preventDefault();
+  const fullName = byId("profile-full-name").value.trim();
+  const department = byId("profile-department").value.trim();
+  const academicYear = Number(byId("profile-academic-year").value);
+  const semesterNumber = Number(byId("profile-semester-number").value);
+  const message = byId("profile-message");
+  if (!fullName || !department) {
+    message.textContent = "Enter your name and degree or branch.";
+    return;
+  }
+  if (!Number.isInteger(academicYear) || academicYear < 1 || academicYear > 4) {
+    message.textContent = "Academic year must be from 1 to 4.";
+    return;
+  }
+
+  const button = byId("save-profile-button");
+  button.disabled = true;
+  message.textContent = "Saving student details…";
+  try {
+    const { data, error } = await state.client
+      .from("profiles")
+      .update({
+        full_name: fullName,
+        department,
+        academic_year: academicYear,
+        semester_number: semesterNumber
+      })
+      .eq("id", state.user.id)
+      .select("id, full_name, registration_number, email, department, academic_year, semester_number")
+      .single();
+    if (error) {
+      throw new Error(`Could not save your student details: ${error.message}`);
+    }
+    state.profile = data;
+    state.year = data.academic_year;
+    state.semester = data.semester_number;
+    showProfile(data);
+    byId("header-name").textContent = data.full_name;
+    byId("header-department").textContent = data.department;
+    byId("avatar-initials").textContent = data.full_name
+      .split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("");
+    syncTermSelectors();
+    await loadSubjects();
+    renderDashboard();
+    message.textContent = "Student details saved.";
+  } catch (error) {
+    message.textContent = error.message || "Could not save your student details.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function initialize() {
   populateTermSelectors();
   document.querySelectorAll(".nav-item").forEach((button) => {
@@ -497,8 +780,14 @@ async function initialize() {
   byId("auth-switch").addEventListener("click", () => {
     setAuthMode(state.authMode === "signup" ? "signin" : "signup");
   });
+  byId("student-auth-mode").addEventListener("click", () => setAuthRoleMode("student"));
+  byId("admin-auth-mode").addEventListener("click", () => setAuthRoleMode("admin"));
   byId("auth-form").addEventListener("submit", handleAuthSubmit);
   byId("subject-form").addEventListener("submit", addSubject);
+  byId("profile-form").addEventListener("submit", saveProfile);
+  ["gpa", "sgpa", "cgpa"].forEach((type) => {
+    byId(`save-${type}-result`).addEventListener("click", () => saveResult(type));
+  });
   byId("sign-out").addEventListener("click", async () => {
     try {
       const { error } = await state.client.auth.signOut();
@@ -545,5 +834,5 @@ async function initialize() {
   }
 }
 
-setAuthMode("signup");
+setAuthRoleMode(state.authRoleMode);
 initialize();
